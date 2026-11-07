@@ -1,0 +1,17 @@
+# Optional local PostgreSQL for development.
+#   docker compose up -d
+# Connection string: Host=localhost;Port=5433;Database=printquote;Username=printquote;Password=printquote
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: printquote
+      POSTGRES_USER: printquote
+      POSTGRES_PASSWORD: printquote
+    ports:
+      - "5433:5432"
+    volumes:
+      - printquote-data:/var/lib/postgresql/data
+
+volumes:
+  printquote-data:

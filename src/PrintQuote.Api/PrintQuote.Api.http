@@ -1,0 +1,34 @@
+@api = http://localhost:5080/api
+
+### Health
+GET {{api}}/health
+
+### Rate masters
+GET {{api}}/papers
+###
+GET {{api}}/presses
+###
+GET {{api}}/templates
+
+### Price a lecture book (English (2), 25,000 pcs) without saving: expect ratePerPiece 16.38
+POST {{api}}/costing/calculate
+Content-Type: application/json
+
+{
+  "spec": {
+    "quantity": 25000,
+    "pageWidthIn": 8.5,
+    "pageHeightIn": 11,
+    "bindingTypeId": "40000000-0000-0000-0000-000000000001",
+    "components": [
+      { "name": "Cover", "measure": "forma", "forma": 0.5, "colors": 2,
+        "paperId": "10000000-0000-0000-0000-000000000070", "pressId": "20000000-0000-0000-0000-000000000001" },
+      { "name": "Inner", "measure": "forma", "forma": 5, "colors": 1, "countsTowardBindingForma": true,
+        "paperId": "10000000-0000-0000-0000-000000000055", "pressId": "20000000-0000-0000-0000-000000000002" }
+    ]
+  },
+  "breakQuantities": [1000, 2500, 10000, 20000, 25000]
+}
+
+### Quotations
+GET {{api}}/quotations?page=1&pageSize=20
