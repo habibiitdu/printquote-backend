@@ -1,0 +1,65 @@
+# PrintQuote production stack: PostgreSQL + API + web (nginx).
+# See deploy/README.md. Short version:
+#   cp .env.example .env      # then set the password and image tags
+#   docker compose up -d
+#
+# Only the web container is published on the host. The API and the database
+# are reachable only on the internal network.
+name: printquote
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-printquote}
+      POSTGRES_USER: ${POSTGRES_USER:-printquote}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  api:
+    image: ${API_IMAGE:-printquote-api}:${IMAGE_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=${POSTGRES_DB:-printquote};Username=${POSTGRES_USER:-printquote};Password=${POSTGRES_PASSWORD}"
+      # Applies pending migrations on start, and seeds the sample rates when
+      # the database has no presses yet. Fine for a single API instance;
+      # see README before running several.
+      Database__MigrateOnStartup: ${MIGRATE_ON_STARTUP:-true}
+      Logging__LogLevel__Default: ${LOG_LEVEL:-Information}
+    networks: [internal]
+
+  web:
+    image: ${WEB_IMAGE:-printquote-web}:${IMAGE_TAG:-latest}
+    build:
+      context: ${FRONTEND_DIR:-../../printquote-frontend}
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_UPSTREAM: http://api:8080
+    ports:
+      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8080}:8080"
+    networks: [internal]
+
+volumes:
+  db-data:
+
+networks:
+  internal:

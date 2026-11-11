@@ -63,3 +63,11 @@ dotnet ef database update --project src/PrintQuote.Infrastructure \
 | `ConnectionStrings:Default` | none (required) | PostgreSQL connection string |
 | `Database:MigrateOnStartup` | `true` in Development, otherwise `false` | Apply migrations and seed an empty database on startup |
 | `Cors:AllowedOrigins` | `http://localhost:5173` in Development | Origins allowed to call the API |
+
+## Deploying to a server
+
+Docker images and a production Compose stack (PostgreSQL + API + nginx web) are set up. See [deploy/README.md](deploy/README.md).
+
+- `Dockerfile`: the API image (`printquote-api`, port 8080, non-root, health check on `/api/health`)
+- `deploy/docker-compose.yml` + `deploy/.env.example`: the full stack
+- `docker-compose.yml` in the repo root is only the local development database.
